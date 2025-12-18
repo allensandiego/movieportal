@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Movie TV People</string>
+    <string name="tmdb_api_key">6ace557371367cf62ab0b73b75eb6202</string>
+    <string name="admob_app_id">ca-app-pub-3121428457842525~3365130693</string>
+    <string name="admob_native_ad_unit_id">ca-app-pub-3121428457842525/5395807570</string>  
+</resources>
