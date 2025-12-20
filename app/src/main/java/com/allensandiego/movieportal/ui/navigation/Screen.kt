@@ -20,6 +20,9 @@ sealed class Screen(val route: String) {
     object PersonDetails : Screen("person_details/{personId}") {
         fun createRoute(personId: Int) = "person_details/$personId"
     }
+    object TVSeasonDetails : Screen("tv_details/{seriesId}/season/{seasonNumber}") {
+        fun createRoute(seriesId: Int, seasonNumber: Int) = "tv_details/$seriesId/season/$seasonNumber"
+    }
 
     // Media
     object FullscreenImage : Screen("fullscreen_image?url={url}") {

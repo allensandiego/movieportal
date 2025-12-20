@@ -13,6 +13,7 @@ import com.allensandiego.movieportal.data.model.PersonImagesResponse
 import com.allensandiego.movieportal.data.model.ReviewResponse
 import com.allensandiego.movieportal.data.model.TMDBItem
 import com.allensandiego.movieportal.data.model.TVShowDetails
+import com.allensandiego.movieportal.data.model.TVSeasonDetails
 import com.allensandiego.movieportal.data.model.VideoResponse
 import javax.inject.Inject
 
@@ -42,6 +43,7 @@ interface TMDBRepository {
     suspend fun getTVCredits(seriesId: Int): Result<CreditsResponse>
     suspend fun getTVReviews(seriesId: Int): Result<ReviewResponse>
     suspend fun getTVEpisodeGroups(seriesId: Int): Result<EpisodeGroupResponse>
+    suspend fun getTVSeasonDetails(seriesId: Int, seasonNumber: Int): Result<TVSeasonDetails>
 
     // Person
     suspend fun getPopularPeople(): Result<BaseResponse<TMDBItem>>
@@ -90,6 +92,7 @@ class TMDBRepositoryImpl @Inject constructor(
     override suspend fun getTVCredits(seriesId: Int) = safeApiCall { service.getTVCredits(seriesId) }
     override suspend fun getTVReviews(seriesId: Int) = safeApiCall { service.getTVReviews(seriesId) }
     override suspend fun getTVEpisodeGroups(seriesId: Int) = safeApiCall { service.getTVEpisodeGroups(seriesId) }
+    override suspend fun getTVSeasonDetails(seriesId: Int, seasonNumber: Int) = safeApiCall { service.getTVSeasonDetails(seriesId, seasonNumber) }
 
     override suspend fun getPopularPeople() = safeApiCall { service.getPopularKey() } 
     override suspend fun getPersonDetails(personId: Int) = safeApiCall { service.getPersonDetails(personId) }

@@ -33,6 +33,7 @@ import com.allensandiego.movieportal.ui.screens.PersonDetailsScreen
 import com.allensandiego.movieportal.ui.screens.PersonScreen
 import com.allensandiego.movieportal.ui.screens.SplashScreen
 import com.allensandiego.movieportal.ui.screens.TVDetailsScreen
+import com.allensandiego.movieportal.ui.screens.TVSeasonDetailsScreen
 import com.allensandiego.movieportal.ui.screens.TVScreen
 import com.allensandiego.movieportal.ui.theme.TMDBTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -136,6 +137,16 @@ fun MovieApp() {
             ) { backStackEntry ->
                 val key = backStackEntry.arguments?.getString("key") ?: ""
                 FullscreenVideoScreen(key) { navController.popBackStack() }
+            }
+
+            composable(
+                Screen.TVSeasonDetails.route,
+                arguments = listOf(
+                    navArgument("seriesId") { type = NavType.IntType },
+                    navArgument("seasonNumber") { type = NavType.IntType }
+                )
+            ) {
+                TVSeasonDetailsScreen(navController)
             }
         }
     }

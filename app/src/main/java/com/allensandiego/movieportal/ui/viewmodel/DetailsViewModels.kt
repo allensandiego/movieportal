@@ -218,3 +218,47 @@ class PersonDetailsViewModel @Inject constructor(
     }
 }
 
+data class TVSeasonDetailsUiState(
+    val details: com.allensandiego.movieportal.data.model.TVSeasonDetails? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+@HiltViewModel
+class TVSeasonDetailsViewModel @Inject constructor(
+    private val repository: TMDBRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    private val seriesId: Int = checkNotNull(savedStateHandle["seriesId"]).let {
+        if (it is String) it.toInt() else it.toString().toInt()
+    }
+    private val seasonNumber: Int = checkNotNull(savedStateHandle["seasonNumber"]).let {
+        if (it is String) it.toInt() else it.toString().toInt()
+    }
+
+    private val _uiState = MutableStateFlow(TVSeasonDetailsUiState())
+    val uiState: StateFlow<TVSeasonDetailsUiState> = _uiState.asStateFlow()
+
+    init {
+        loadDetails()
+    }
+
+    private fun loadDetails() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val result = repository.getTVSeasonDetails(seriesId, seasonNumber)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(
+                    details = result.getOrNull(),
+                    isLoading = false
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    error = result.exceptionOrNull()?.message ?: "Unknown error",
+                    isLoading = false
+                )
+            }
+        }
+    }
+}

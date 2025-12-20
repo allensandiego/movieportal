@@ -66,7 +66,18 @@ data class TVShowDetails(
     @SerializedName("backdrop_path") val backdropPath: String?,
     @SerializedName("first_air_date") val firstAirDate: String?,
     val genres: List<Genre>?,
-    @SerializedName("number_of_seasons") val numberOfSeasons: Int?
+    @SerializedName("number_of_seasons") val numberOfSeasons: Int?,
+    val seasons: List<Season>?
+)
+
+data class Season(
+    val id: Int,
+    val name: String,
+    val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("air_date") val airDate: String?,
+    @SerializedName("season_number") val seasonNumber: Int,
+    @SerializedName("episode_count") val episodeCount: Int
 )
 
 data class PersonDetails(
@@ -184,3 +195,27 @@ data class EpisodeGroup(
     val type: Int
 )
 
+// TV Seasons
+data class TVSeasonDetails(
+    val id: Int,
+    val name: String,
+    val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("air_date") val airDate: String?,
+    @SerializedName("season_number") val seasonNumber: Int,
+    val episodes: List<Episode>?
+)
+
+data class Episode(
+    val id: Int,
+    val name: String,
+    val overview: String?,
+    @SerializedName("still_path") val stillPath: String?,
+    @SerializedName("air_date") val airDate: String?,
+    @SerializedName("episode_number") val episodeNumber: Int,
+    @SerializedName("season_number") val seasonNumber: Int,
+    @SerializedName("vote_average") val voteAverage: Double?,
+    val runtime: Int?,
+    val crew: List<Crew>?,
+    @SerializedName("guest_stars") val guestStars: List<Cast>?
+)

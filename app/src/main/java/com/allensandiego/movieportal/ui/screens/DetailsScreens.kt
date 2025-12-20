@@ -1,5 +1,6 @@
 package com.allensandiego.movieportal.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,8 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -20,15 +24,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +61,10 @@ import com.allensandiego.movieportal.ui.components.LoadingIndicator
 import com.allensandiego.movieportal.ui.viewmodel.MovieDetailsViewModel
 import com.allensandiego.movieportal.ui.viewmodel.PersonDetailsViewModel
 import com.allensandiego.movieportal.ui.viewmodel.TVDetailsViewModel
+import com.allensandiego.movieportal.ui.viewmodel.TVSeasonDetailsViewModel
+import com.allensandiego.movieportal.data.model.Episode
+import com.allensandiego.movieportal.data.model.Crew
+import com.allensandiego.movieportal.data.model.Season
 import com.allensandiego.movieportal.util.DateUtils
 
 @Composable
@@ -281,7 +297,7 @@ fun ReviewsSection(reviews: List<Review>) {
         )
     } else {
         Column {
-            reviews.take(5).forEach { review ->
+            for (review in reviews.take(5)) {
                 ReviewItem(review)
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             }
@@ -392,6 +408,18 @@ fun TVDetailsScreen(
                         )
                         CreditsSection(uiState.cast) { personId ->
                             navController.navigate(Screen.PersonDetails.createRoute(personId))
+                        }
+
+                        if (!details.seasons.isNullOrEmpty()) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Seasons",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            SeasonsSection(details.seasons) { seasonNumber ->
+                                navController.navigate(Screen.TVSeasonDetails.createRoute(details.id, seasonNumber))
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -626,3 +654,318 @@ fun EpisodeGroupItem(group: com.allensandiego.movieportal.data.model.EpisodeGrou
     }
 }
 
+@Composable
+fun SeasonsSection(
+    seasons: List<com.allensandiego.movieportal.data.model.Season>,
+    onSeasonClick: (Int) -> Unit
+) {
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        items(seasons) { season ->
+            SeasonItem(season) {
+                onSeasonClick(season.seasonNumber)
+            }
+        }
+    }
+}
+
+@Composable
+fun SeasonItem(
+    season: com.allensandiego.movieportal.data.model.Season,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .padding(end = 8.dp)
+            .width(120.dp)
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(IMAGE_BASE_URL + season.posterPath)
+                .crossfade(true)
+                .build(),
+            contentDescription = season.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .height(180.dp)
+                .width(120.dp)
+                .clip(RoundedCornerShape(8.dp))
+        )
+        Text(
+            text = season.name,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        Text(
+            text = "${season.episodeCount} Episodes",
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.secondary
+        )
+        if (season.airDate != null) {
+            Text(
+                text = DateUtils.formatDate(season.airDate),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TVSeasonDetailsScreen(
+    navController: NavHostController,
+    viewModel: TVSeasonDetailsViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    var selectedEpisode by remember { mutableStateOf<Episode?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (uiState.isLoading) {
+            LoadingIndicator()
+        } else if (uiState.error != null) {
+            ErrorMessage(message = uiState.error ?: "Error loading season details")
+        } else {
+            val details = uiState.details
+            if (details != null) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = details.name,
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(16.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(details.episodes ?: emptyList()) { episode ->
+                            EpisodeCard(episode) {
+                                selectedEpisode = episode
+                                showBottomSheet = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (showBottomSheet && selectedEpisode != null) {
+            ModalBottomSheet(
+                onDismissRequest = { showBottomSheet = false },
+                sheetState = sheetState
+            ) {
+                EpisodeDetailsContent(selectedEpisode!!) { personId ->
+                    showBottomSheet = false
+                    navController.navigate(Screen.PersonDetails.createRoute(personId))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EpisodeCard(episode: Episode, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Box {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(IMAGE_BASE_URL + episode.stillPath)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = episode.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            // Overlay for better text visibility
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 300f
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "${episode.episodeNumber}. ${episode.name}",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "⭐ ${String.format("%.1f", episode.voteAverage ?: 0.0)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun EpisodeDetailsContent(
+    episode: Episode,
+    onPersonClick: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(IMAGE_BASE_URL + episode.stillPath)
+                .crossfade(true)
+                .build(),
+            contentDescription = episode.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = episode.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(text = "Air Date: ${DateUtils.formatDate(episode.airDate)}", style = MaterialTheme.typography.bodyMedium)
+        if (episode.runtime != null) {
+            Text(text = "Runtime: ${episode.runtime} min", style = MaterialTheme.typography.bodyMedium)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = episode.overview ?: "No overview available.", style = MaterialTheme.typography.bodyLarge)
+        
+        if (!episode.guestStars.isNullOrEmpty()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(text = "Guest Stars", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 3
+            ) {
+                val itemWidth = 110.dp
+                for (guest in episode.guestStars.take(12)) {
+                    CreditCard(
+                        name = guest.name,
+                        subtext = guest.character,
+                        profilePath = guest.profilePath,
+                        modifier = Modifier.width(itemWidth),
+                        onClick = { onPersonClick(guest.id) }
+                    )
+                }
+            }
+        }
+
+        if (!episode.crew.isNullOrEmpty()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(text = "Crew", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 3
+            ) {
+                val itemWidth = 110.dp
+                for (crewMember in episode.crew.take(12)) {
+                    CreditCard(
+                        name = crewMember.name,
+                        subtext = crewMember.job,
+                        profilePath = crewMember.profilePath,
+                        modifier = Modifier.width(itemWidth),
+                        onClick = { onPersonClick(crewMember.id) }
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+fun CreditCard(
+    name: String,
+    subtext: String,
+    profilePath: String?,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(160.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Box {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(IMAGE_BASE_URL + profilePath)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            // Overlay for readability
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 100f
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtext,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.8f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}

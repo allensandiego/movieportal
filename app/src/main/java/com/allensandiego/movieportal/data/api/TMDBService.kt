@@ -12,6 +12,7 @@ import com.allensandiego.movieportal.data.model.PersonImagesResponse
 import com.allensandiego.movieportal.data.model.ReviewResponse
 import com.allensandiego.movieportal.data.model.TMDBItem
 import com.allensandiego.movieportal.data.model.TVShowDetails
+import com.allensandiego.movieportal.data.model.TVSeasonDetails
 import com.allensandiego.movieportal.data.model.VideoResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -91,6 +92,12 @@ interface TMDBService {
 
     @GET("tv/{series_id}/episode_groups")
     suspend fun getTVEpisodeGroups(@Path("series_id") seriesId: Int): EpisodeGroupResponse
+
+    @GET("tv/{series_id}/season/{season_number}")
+    suspend fun getTVSeasonDetails(
+        @Path("series_id") seriesId: Int,
+        @Path("season_number") seasonNumber: Int
+    ): TVSeasonDetails
 
     // People
     @GET("person/popular")
