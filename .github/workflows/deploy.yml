@@ -32,7 +32,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Release Bundle
-        run: ./gradlew :mobile:bundleRelease --stacktrace
+        run: ./gradlew :app:bundleRelease --stacktrace
 
       - name: Sign Bundle
         uses: r0adkll/sign-android-release@v1
@@ -50,7 +50,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          packageName: com.allensandiego.peek
+          packageName: com.allensandiego.movieportal
           releaseFiles: ${{ steps.sign_app.outputs.signedReleaseFile }}
           track: internal
           status: completed
