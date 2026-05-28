@@ -9,14 +9,15 @@ plugins {
 
 android {
     namespace = "com.allensandiego.movieportal"
-    compileSdk = 35
+    compileSdk = 36
+    buildToolsVersion = "36.1.0"
 
     defaultConfig {
         applicationId = "com.allensandiego.movieportal"
         minSdk = 30
-        targetSdk = 35
-        versionCode = 30
-        versionName = "2.0.0"
+        targetSdk = 36
+        versionCode = 31
+        versionName = "2.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
