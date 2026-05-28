@@ -13,9 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
 import com.allensandiego.movieportal.ui.components.NativeAdComponent
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -107,11 +112,34 @@ fun MediaGrid(
     items: List<TMDBItem>,
     onItemClick: (TMDBItem) -> Unit,
     modifier: Modifier = Modifier,
-    adUnitId: String? = null
+    adUnitId: String? = null,
+    onLoadMore: (() -> Unit)? = null,
+    isLoadingMore: Boolean = false
 ) {
+    val listState = rememberLazyGridState()
+
+    // Detect when user is scrolling near the bottom of the list
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val totalItemsNumber = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) + 1
+            
+            // Trigger when there are less than 4 items remaining to scroll
+            totalItemsNumber > 0 && lastVisibleItemIndex >= (totalItemsNumber - 4)
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore.value) {
+        if (shouldLoadMore.value && !isLoadingMore && onLoadMore != null) {
+            onLoadMore()
+        }
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 120.dp),
         contentPadding = PaddingValues(8.dp),
+        state = listState,
         modifier = modifier
     ) {
         // We can insert an ad every 6 items for example
@@ -126,6 +154,20 @@ fun MediaGrid(
             if (adUnitId != null && index < itemsWithAds.size - 1) {
                 item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                     NativeAdComponent(adUnitId = adUnitId)
+                }
+            }
+        }
+
+        // Show a loading indicator at the bottom if loading more items
+        if (isLoadingMore) {
+            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(32.dp))
                 }
             }
         }

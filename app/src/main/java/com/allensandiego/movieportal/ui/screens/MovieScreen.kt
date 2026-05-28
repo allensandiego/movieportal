@@ -47,6 +47,8 @@ fun MovieScreen(
                 onItemClick = { movie ->
                     navController.navigate(Screen.MovieDetails.createRoute(movie.id))
                 },
+                onLoadMore = { viewModel.loadNextPage() },
+                isLoadingMore = uiState.isLoadingMore,
                 modifier = Modifier.weight(1f)
             )
         }

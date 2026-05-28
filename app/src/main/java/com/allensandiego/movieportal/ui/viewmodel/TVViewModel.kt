@@ -19,7 +19,10 @@ data class TVUiState(
     val selectedTab: TVTab = TVTab.AiringToday,
     val tvShows: List<TMDBItem> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val isLoadingMore: Boolean = false,
+    val error: String? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1
 )
 
 @HiltViewModel
@@ -35,7 +38,8 @@ class TVViewModel @Inject constructor(
     }
 
     fun onTabSelected(tab: TVTab) {
-        _uiState.value = _uiState.value.copy(selectedTab = tab)
+        if (_uiState.value.selectedTab == tab) return
+        _uiState.value = TVUiState(selectedTab = tab)
         loadTVShows(tab)
     }
 
@@ -43,20 +47,53 @@ class TVViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val result = when (tab) {
-                TVTab.AiringToday -> repository.getAiringTodayTV()
-                TVTab.Popular -> repository.getPopularTV()
-                TVTab.TopRated -> repository.getTopRatedTV()
-                TVTab.OnTheAir -> repository.getOnTheAirTV()
+                TVTab.AiringToday -> repository.getAiringTodayTV(1)
+                TVTab.Popular -> repository.getPopularTV(1)
+                TVTab.TopRated -> repository.getTopRatedTV(1)
+                TVTab.OnTheAir -> repository.getOnTheAirTV(1)
             }
             result.onSuccess { response ->
                 _uiState.value = _uiState.value.copy(
                     tvShows = response.results,
                     isLoading = false,
-                    error = null
+                    error = null,
+                    currentPage = response.page,
+                    totalPages = response.totalPages
                 )
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    error = e.message
+                )
+            }
+        }
+    }
+
+    fun loadNextPage() {
+        val currentState = _uiState.value
+        if (currentState.isLoading || currentState.isLoadingMore || currentState.currentPage >= currentState.totalPages) return
+
+        val nextPage = currentState.currentPage + 1
+        _uiState.value = currentState.copy(isLoadingMore = true)
+
+        viewModelScope.launch {
+            val result = when (currentState.selectedTab) {
+                TVTab.AiringToday -> repository.getAiringTodayTV(nextPage)
+                TVTab.Popular -> repository.getPopularTV(nextPage)
+                TVTab.TopRated -> repository.getTopRatedTV(nextPage)
+                TVTab.OnTheAir -> repository.getOnTheAirTV(nextPage)
+            }
+            result.onSuccess { response ->
+                _uiState.value = _uiState.value.copy(
+                    tvShows = currentState.tvShows + response.results,
+                    isLoadingMore = false,
+                    error = null,
+                    currentPage = response.page,
+                    totalPages = response.totalPages
+                )
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    isLoadingMore = false,
                     error = e.message
                 )
             }

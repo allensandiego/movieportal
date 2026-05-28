@@ -43,7 +43,7 @@ class HomeViewModel @Inject constructor(
     private fun getTrending() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = repository.getTrendingAll()
+            val result = repository.getTrendingAll(1)
             result.onSuccess { response ->
                 _uiState.value = _uiState.value.copy(
                     trendingItems = response.results,
@@ -62,7 +62,7 @@ class HomeViewModel @Inject constructor(
     private fun searchMulti(query: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = repository.searchMulti(query)
+            val result = repository.searchMulti(query, 1)
             result.onSuccess { response ->
                 _uiState.value = _uiState.value.copy(
                     searchResults = response.results,

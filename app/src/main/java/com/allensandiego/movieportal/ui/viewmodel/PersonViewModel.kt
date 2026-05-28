@@ -14,7 +14,10 @@ import javax.inject.Inject
 data class PersonUiState(
     val people: List<TMDBItem> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val isLoadingMore: Boolean = false,
+    val error: String? = null,
+    val currentPage: Int = 1,
+    val totalPages: Int = 1
 )
 
 @HiltViewModel
@@ -32,16 +35,44 @@ class PersonViewModel @Inject constructor(
     private fun loadPopularPeople() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = repository.getPopularPeople()
+            val result = repository.getPopularPeople(1)
             result.onSuccess { response ->
                 _uiState.value = _uiState.value.copy(
                     people = response.results,
                     isLoading = false,
-                    error = null
+                    error = null,
+                    currentPage = response.page,
+                    totalPages = response.totalPages
                 )
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    error = e.message
+                )
+            }
+        }
+    }
+
+    fun loadNextPage() {
+        val currentState = _uiState.value
+        if (currentState.isLoading || currentState.isLoadingMore || currentState.currentPage >= currentState.totalPages) return
+
+        val nextPage = currentState.currentPage + 1
+        _uiState.value = currentState.copy(isLoadingMore = true)
+
+        viewModelScope.launch {
+            val result = repository.getPopularPeople(nextPage)
+            result.onSuccess { response ->
+                _uiState.value = _uiState.value.copy(
+                    people = currentState.people + response.results,
+                    isLoadingMore = false,
+                    error = null,
+                    currentPage = response.page,
+                    totalPages = response.totalPages
+                )
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    isLoadingMore = false,
                     error = e.message
                 )
             }
