@@ -34,6 +34,8 @@ fun PersonScreen(
                 onItemClick = { person ->
                     navController.navigate(Screen.PersonDetails.createRoute(person.id))
                 },
+                onLoadMore = { viewModel.loadNextPage() },
+                isLoadingMore = uiState.isLoadingMore,
                 modifier = Modifier.fillMaxSize()
             )
         }

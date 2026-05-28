@@ -18,14 +18,14 @@ import com.allensandiego.movieportal.data.model.VideoResponse
 import javax.inject.Inject
 
 interface TMDBRepository {
-    suspend fun searchMulti(query: String): Result<BaseResponse<TMDBItem>>
-    suspend fun getTrendingAll(): Result<BaseResponse<TMDBItem>>
+    suspend fun searchMulti(query: String, page: Int = 1): Result<BaseResponse<TMDBItem>>
+    suspend fun getTrendingAll(page: Int = 1): Result<BaseResponse<TMDBItem>>
     
     // Movies
-    suspend fun getNowPlayingMovies(): Result<BaseResponse<TMDBItem>>
-    suspend fun getPopularMovies(): Result<BaseResponse<TMDBItem>>
-    suspend fun getTopRatedMovies(): Result<BaseResponse<TMDBItem>>
-    suspend fun getUpcomingMovies(): Result<BaseResponse<TMDBItem>>
+    suspend fun getNowPlayingMovies(page: Int = 1): Result<BaseResponse<TMDBItem>>
+    suspend fun getPopularMovies(page: Int = 1): Result<BaseResponse<TMDBItem>>
+    suspend fun getTopRatedMovies(page: Int = 1): Result<BaseResponse<TMDBItem>>
+    suspend fun getUpcomingMovies(page: Int = 1): Result<BaseResponse<TMDBItem>>
     suspend fun getMovieDetails(movieId: Int): Result<MovieDetails>
     suspend fun getMovieImages(movieId: Int): Result<ImageResponse>
     suspend fun getMovieVideos(movieId: Int): Result<VideoResponse>
@@ -33,10 +33,10 @@ interface TMDBRepository {
     suspend fun getMovieReviews(movieId: Int): Result<ReviewResponse>
 
     // TV
-    suspend fun getAiringTodayTV(): Result<BaseResponse<TMDBItem>>
-    suspend fun getPopularTV(): Result<BaseResponse<TMDBItem>>
-    suspend fun getTopRatedTV(): Result<BaseResponse<TMDBItem>>
-    suspend fun getOnTheAirTV(): Result<BaseResponse<TMDBItem>>
+    suspend fun getAiringTodayTV(page: Int = 1): Result<BaseResponse<TMDBItem>>
+    suspend fun getPopularTV(page: Int = 1): Result<BaseResponse<TMDBItem>>
+    suspend fun getTopRatedTV(page: Int = 1): Result<BaseResponse<TMDBItem>>
+    suspend fun getOnTheAirTV(page: Int = 1): Result<BaseResponse<TMDBItem>>
     suspend fun getTVShowDetails(seriesId: Int): Result<TVShowDetails>
     suspend fun getTVImages(seriesId: Int): Result<ImageResponse>
     suspend fun getTVVideos(seriesId: Int): Result<VideoResponse>
@@ -46,7 +46,7 @@ interface TMDBRepository {
     suspend fun getTVSeasonDetails(seriesId: Int, seasonNumber: Int): Result<TVSeasonDetails>
 
     // Person
-    suspend fun getPopularPeople(): Result<BaseResponse<TMDBItem>>
+    suspend fun getPopularPeople(page: Int = 1): Result<BaseResponse<TMDBItem>>
     suspend fun getPersonDetails(personId: Int): Result<PersonDetails>
     suspend fun getPersonImages(personId: Int): Result<PersonImagesResponse>
     suspend fun getPersonMovieCredits(personId: Int): Result<PersonCreditsResponse>
@@ -69,23 +69,23 @@ class TMDBRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun searchMulti(query: String) = safeApiCall { service.searchMulti(query) }
-    override suspend fun getTrendingAll() = safeApiCall { service.getTrendingAll() }
+    override suspend fun searchMulti(query: String, page: Int) = safeApiCall { service.searchMulti(query, page) }
+    override suspend fun getTrendingAll(page: Int) = safeApiCall { service.getTrendingAll(page) }
 
-    override suspend fun getNowPlayingMovies() = safeApiCall { service.getNowPlayingMovies() }
-    override suspend fun getPopularMovies() = safeApiCall { service.getPopularMovies() }
-    override suspend fun getTopRatedMovies() = safeApiCall { service.getTopRatedMovies() }
-    override suspend fun getUpcomingMovies() = safeApiCall { service.getUpcomingMovies() }
+    override suspend fun getNowPlayingMovies(page: Int) = safeApiCall { service.getNowPlayingMovies(page) }
+    override suspend fun getPopularMovies(page: Int) = safeApiCall { service.getPopularMovies(page) }
+    override suspend fun getTopRatedMovies(page: Int) = safeApiCall { service.getTopRatedMovies(page) }
+    override suspend fun getUpcomingMovies(page: Int) = safeApiCall { service.getUpcomingMovies(page) }
     override suspend fun getMovieDetails(movieId: Int) = safeApiCall { service.getMovieDetails(movieId) }
     override suspend fun getMovieImages(movieId: Int) = safeApiCall { service.getMovieImages(movieId) }
     override suspend fun getMovieVideos(movieId: Int) = safeApiCall { service.getMovieVideos(movieId) }
     override suspend fun getMovieCredits(movieId: Int) = safeApiCall { service.getMovieCredits(movieId) }
     override suspend fun getMovieReviews(movieId: Int) = safeApiCall { service.getMovieReviews(movieId) }
 
-    override suspend fun getAiringTodayTV() = safeApiCall { service.getAiringTodayTV() }
-    override suspend fun getPopularTV() = safeApiCall { service.getPopularTV() }
-    override suspend fun getTopRatedTV() = safeApiCall { service.getTopRatedTV() }
-    override suspend fun getOnTheAirTV() = safeApiCall { service.getOnTheAirTV() }
+    override suspend fun getAiringTodayTV(page: Int) = safeApiCall { service.getAiringTodayTV(page) }
+    override suspend fun getPopularTV(page: Int) = safeApiCall { service.getPopularTV(page) }
+    override suspend fun getTopRatedTV(page: Int) = safeApiCall { service.getTopRatedTV(page) }
+    override suspend fun getOnTheAirTV(page: Int) = safeApiCall { service.getOnTheAirTV(page) }
     override suspend fun getTVShowDetails(seriesId: Int) = safeApiCall { service.getTVShowDetails(seriesId) }
     override suspend fun getTVImages(seriesId: Int) = safeApiCall { service.getTVImages(seriesId) }
     override suspend fun getTVVideos(seriesId: Int) = safeApiCall { service.getTVVideos(seriesId) }
@@ -94,7 +94,7 @@ class TMDBRepositoryImpl @Inject constructor(
     override suspend fun getTVEpisodeGroups(seriesId: Int) = safeApiCall { service.getTVEpisodeGroups(seriesId) }
     override suspend fun getTVSeasonDetails(seriesId: Int, seasonNumber: Int) = safeApiCall { service.getTVSeasonDetails(seriesId, seasonNumber) }
 
-    override suspend fun getPopularPeople() = safeApiCall { service.getPopularKey() } 
+    override suspend fun getPopularPeople(page: Int) = safeApiCall { service.getPopularKey(page) } 
     override suspend fun getPersonDetails(personId: Int) = safeApiCall { service.getPersonDetails(personId) }
     override suspend fun getPersonImages(personId: Int) = safeApiCall { service.getPersonImages(personId) }
     override suspend fun getPersonMovieCredits(personId: Int) = safeApiCall { service.getPersonMovieCredits(personId) }

@@ -51,6 +51,8 @@ fun TVScreen(
                 onItemClick = { tv ->
                     navController.navigate(Screen.TVDetails.createRoute(tv.id))
                 },
+                onLoadMore = { viewModel.loadNextPage() },
+                isLoadingMore = uiState.isLoadingMore,
                 modifier = Modifier.weight(1f)
             )
         }
