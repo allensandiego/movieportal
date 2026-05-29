@@ -31,6 +31,7 @@ sealed class Screen(val route: String) {
     object FullscreenVideo : Screen("fullscreen_video?key={key}") {
         fun createRoute(key: String) = "fullscreen_video?key=$key"
     }
+    object Settings : Screen("settings")
 }
 
 enum class BottomNavItem(

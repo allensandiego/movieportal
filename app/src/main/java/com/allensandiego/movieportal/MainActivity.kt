@@ -37,21 +37,37 @@ import com.allensandiego.movieportal.ui.screens.TVSeasonDetailsScreen
 import com.allensandiego.movieportal.ui.screens.TVScreen
 import com.allensandiego.movieportal.ui.theme.TMDBTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import com.allensandiego.movieportal.data.local.ThemePreferences
+import com.allensandiego.movieportal.data.local.AppTheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import com.allensandiego.movieportal.ui.screens.SettingsScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var themePreferences: ThemePreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TMDBTheme {
-                MovieApp()
+            val themeState by themePreferences.theme.collectAsState()
+            val darkTheme = when (themeState) {
+                AppTheme.LIGHT -> false
+                AppTheme.DARK -> true
+                AppTheme.SYSTEM -> isSystemInDarkTheme()
+            }
+            TMDBTheme(darkTheme = darkTheme) {
+                MovieApp(themePreferences)
             }
         }
     }
 }
 
 @Composable
-fun MovieApp() {
+fun MovieApp(themePreferences: ThemePreferences) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -147,6 +163,10 @@ fun MovieApp() {
                 )
             ) {
                 TVSeasonDetailsScreen(navController)
+            }
+
+            composable(Screen.Settings.route) {
+                SettingsScreen(navController, themePreferences)
             }
         }
     }
